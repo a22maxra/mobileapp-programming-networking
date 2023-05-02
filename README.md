@@ -1,42 +1,56 @@
 
 # Rapport
 
-**Skriv din rapport här!**
+Först läggs en RecycleView in i activity_main.xml, efter det 
+sätts alla constraints och dependencies läggs in i build.gradle:
 
-_Du kan ta bort all text som finns sedan tidigare_.
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
-## Följande grundsyn gäller dugga-svar:
+Sedan skapas classen Mountain med tre privata fält för att lagra data:
 
-- Ett kortfattat svar är att föredra. Svar som är längre än en sida text (skärmdumpar och programkod exkluderat) är onödigt långt.
-- Svaret skall ha minst en snutt programkod.
-- Svaret skall inkludera en kort övergripande förklarande text som redogör för vad respektive snutt programkod gör eller som svarar på annan teorifråga.
-- Svaret skall ha minst en skärmdump. Skärmdumpar skall illustrera exekvering av relevant programkod. Eventuell text i skärmdumpar måste vara läsbar.
-- I de fall detta efterfrågas, dela upp delar av ditt svar i för- och nackdelar. Dina för- respektive nackdelar skall vara i form av punktlistor med kortare stycken (3-4 meningar).
+    private String name;
+    private String location;
+    @SerializedName("size")
+    private int height;
 
-Programkod ska se ut som exemplet nedan. Koden måste vara korrekt indenterad då den blir lättare att läsa vilket gör det lättare att hitta syntaktiska fel.
+Nu behövs en ny xml fil för som representerar hur ett mountain 
+visas i RecycleView, mountain_item.xml skapas i layout mappen, här används
+LinearLayout och TextView med en del designelement som padding och textsize.
 
-```
-function errorCallback(error) {
-    switch(error.code) {
-        case error.PERMISSION_DENIED:
-            // Geolocation API stöds inte, gör något
-            break;
-        case error.POSITION_UNAVAILABLE:
-            // Misslyckat positionsanrop, gör något
-            break;
-        case error.UNKNOWN_ERROR:
-            // Okänt fel, gör något
-            break;
+Sedan skapas RecyclerViewAdapter classen vilket används för att visa data i 
+våran RecycleView. Här används Mountain classen som returnar en String som 
+beskriver ett berg och mountain_item.xml för att visa varje berg.
+
+Sedan lägger vi till adaptern i MainActivity.java:
+
+    private RecyclerViewAdapter adapter;
+    private ArrayList<Mountain> items;
+
+I onCreate:
+
+    adapter = new RecyclerViewAdapter(this, items, new RecyclerViewAdapter.OnClickListener() {
+        @Override
+        public void onClick(Mountain item) {
+            Toast.makeText(MainActivity.this, item.getMountain(), Toast.LENGTH_SHORT).show();
+        }
+    });
+    RecyclerView view = findViewById(R.id.displayMountains);
+    view.setLayoutManager(new LinearLayoutManager(this));
+    view.setAdapter(adapter);
+    
+JSON data hämtas från URLen "https://mobprog.webug.se/json-api?login=brom" och sparas
+i items, som är en array av typen Mountain:
+
+    @Override
+    public void onPostExecute(String json) {
+        Log.d("MainActivity", json);
+        Type type = new TypeToken<List<Mountain>>() {
+        }.getType();
+        items = gson.fromJson(json, type);
+
+        adapter.setItems(items);
+        adapter.notifyDataSetChanged();
     }
-}
-```
 
-Bilder läggs i samma mapp som markdown-filen.
-
-![](android.png)
-
-Läs gärna:
-
-- Boulos, M.N.K., Warren, J., Gong, J. & Yue, P. (2010) Web GIS in practice VIII: HTML5 and the canvas element for interactive online mapping. International journal of health geographics 9, 14. Shin, Y. &
-- Wunsche, B.C. (2013) A smartphone-based golf simulation exercise game for supporting arthritis patients. 2013 28th International Conference of Image and Vision Computing New Zealand (IVCNZ), IEEE, pp. 459–464.
-- Wohlin, C., Runeson, P., Höst, M., Ohlsson, M.C., Regnell, B., Wesslén, A. (2012) Experimentation in Software Engineering, Berlin, Heidelberg: Springer Berlin Heidelberg.
+Efter att internetaccess lagts till kan appen komma åt datan och appen ser ut som sådan:
+<img src="Mountains.png" width="25%"/>
